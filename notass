@@ -1,0 +1,91 @@
+#!/usr/bin/env lua
+-- notass: notas estilo conky en la esquina superior derecha
+--   notass                 abre el widget
+--   notass add "nota"      agrega una nota
+--   notass delete N        elimina la nota número N
+--   notass list            muestra las notas en la terminal
+--   notass stop            cierra el widget
+
+local HOME = os.getenv('HOME')
+local CONF = HOME .. '/.config/notass/notass.conf'
+local DIR = HOME .. '/.local/share/notass'
+local NOTES_FILE = DIR .. '/notas.txt'
+
+local function read_notes()
+    local notes = {}
+    local f = io.open(NOTES_FILE, 'r')
+    if not f then return notes end
+    for line in f:lines() do
+        if line ~= '' then table.insert(notes, line) end
+    end
+    f:close()
+    return notes
+end
+
+local function write_notes(notes)
+    os.execute('mkdir -p "' .. DIR .. '"')
+    local f = assert(io.open(NOTES_FILE, 'w'))
+    for _, n in ipairs(notes) do f:write(n, '\n') end
+    f:close()
+end
+
+local function is_running()
+    local r = os.execute('pgrep -f -- "[c]onky -c ' .. CONF .. '" >/dev/null 2>&1')
+    return r == 0 or r == true
+end
+
+local function start()
+    if is_running() then
+        print('notass ya está en pantalla')
+        return
+    end
+    os.execute('nohup conky -c "' .. CONF .. '" >/dev/null 2>&1 &')
+    print('notass iniciado')
+end
+
+local function usage()
+    print([[uso:
+  notass                 abre el widget de notas
+  notass add "nota"      agrega una nota
+  notass delete N        elimina la nota número N
+  notass list            lista las notas
+  notass stop            cierra el widget]])
+end
+
+local cmd = arg[1]
+
+if cmd == nil then
+    start()
+elseif cmd == 'add' then
+    local text = table.concat(arg, ' ', 2):gsub('[\r\n]+', ' '):match('^%s*(.-)%s*$')
+    if text == '' then
+        io.stderr:write('error: escribe la nota, ej: notass add "comprar pan"\n')
+        os.exit(1)
+    end
+    local notes = read_notes()
+    table.insert(notes, text)
+    write_notes(notes)
+    print(string.format('nota %d agregada: %s', #notes, text))
+elseif cmd == 'delete' or cmd == 'del' or cmd == 'rm' then
+    local n = tonumber(arg[2])
+    local notes = read_notes()
+    if not n or n < 1 or n > #notes or n % 1 ~= 0 then
+        io.stderr:write(string.format('error: número de nota inválido (hay %d notas)\n', #notes))
+        os.exit(1)
+    end
+    local removed = table.remove(notes, n)
+    write_notes(notes)
+    print(string.format('nota %d eliminada: %s', n, removed))
+elseif cmd == 'list' or cmd == 'ls' then
+    local notes = read_notes()
+    if #notes == 0 then print('(sin notas)') end
+    for i, n in ipairs(notes) do print(string.format('%2d. %s', i, n)) end
+elseif cmd == 'stop' then
+    os.execute('pkill -f -- "[c]onky -c ' .. CONF .. '"')
+    print('notass cerrado')
+elseif cmd == 'help' or cmd == '-h' or cmd == '--help' then
+    usage()
+else
+    usage()
+    os.exit(1)
+end
