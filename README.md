@@ -28,7 +28,7 @@ notass stop                  # cierra el widget
 | Archivo | Qué hace |
 |---|---|
 | `notass` | comando de terminal |
-| `notass.conf` | configuración de conky (posición, fuente, colores) |
+| `notass.conf` | configuración (posición, fuente, colores) |
 | `notass.lua` | lee las notas, las formatea y dibuja el banner infinito |
 
 Las notas se guardan en `~/.local/share/notass/notas.txt` (una por línea).
