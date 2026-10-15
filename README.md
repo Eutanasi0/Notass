@@ -1,6 +1,6 @@
 # Notass
 
-Notas en el escritorio al estilo **conky**, en la esquina superior derecha de la pantalla.
+Notas en el escritorio , en la esquina superior derecha de la pantalla.
 Hecho en Lua para Linux Mint.
 
 ## Instalación
